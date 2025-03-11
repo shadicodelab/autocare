@@ -24,3 +24,9 @@ def team(request):
 
 def testimonial(request):
     return render(request, "autocare/testimonial.html")
+
+def locate(request):
+    return render(request, "autocare/locate.html")
+
+def chat(request):
+    return render(request, "autocare/chat.html")
