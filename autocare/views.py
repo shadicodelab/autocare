@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import render, redirect
-from .models import Garage
+from .models import Garage, GarageLocation, GarageService
 from .forms import GarageRegistrationForm
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -10,42 +10,80 @@ from django.urls import reverse
 from .models import User
 from django.contrib.auth.decorators import login_required
 from .models import User
+from django.contrib import messages
 
 @login_required
 def register_garage(request):
     if request.method == "POST":
-        form = GarageRegistrationForm(request.POST, request.FILES)  # Include request.FILES for image upload
+        form = GarageRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('service')  # Redirect to the services page after successful registration
+            # Extract form data
+            name = form.cleaned_data['name']
+            owner_name = form.cleaned_data['owner_name']
+            contact = form.cleaned_data['contact']
+            email = form.cleaned_data['email']
+            image = form.cleaned_data.get('image')
+
+            # Create or get location
+            location_address = form.cleaned_data['location_address']
+            location_latitude = form.cleaned_data['location_latitude']
+            location_longitude = form.cleaned_data['location_longitude']
+            location, _ = GarageLocation.objects.get_or_create(
+                address=location_address,
+                latitude=location_latitude,
+                longitude=location_longitude
+            )
+
+            # Create the Garage object (without committing services yet)
+            garage = Garage.objects.create(
+                name=name,
+                location=location,
+                owner_name=owner_name,
+                contact=contact,
+                email=email,
+                image=image
+            )
+
+            # Handle many-to-many services selection from checkboxes
+            service_ids = request.POST.getlist('services')  # returns a list of strings
+            selected_services = GarageService.objects.filter(id__in=service_ids)
+            garage.services.set(selected_services)
+
+            messages.success(request, "Garage registered successfully!")
+            return redirect('service')
+        else:
+            messages.error(request, "Please correct the errors in the form.")
     else:
         form = GarageRegistrationForm()
 
-    return render(request, 'autocare/register_garage.html', {'form': form})
+    # Manually pass services to render in the template
+    services = GarageService.objects.all()
+
+    return render(request, 'autocare/register_garage.html', {
+        'form': form,
+        'services': services
+    })
+
 
 @login_required
 def search_garages(request):
-    location = request.GET.get('location', '')
-    service = request.GET.get('service', '')
+    location = request.GET.get('location', '').strip()
+    service = request.GET.get('service', '').strip()
 
-    # Fetch all unique services at all times
-    all_services = set()
-    for garage in Garage.objects.all():
-        for srv in garage.services.split(','):
-            all_services.add(srv.strip())
-
-    # Filter garages based on user input
+    all_services = GarageService.objects.all()
     garages = Garage.objects.all()
+
     if location:
-        garages = garages.filter(location__icontains=location)
+        garages = garages.filter(location__address__icontains=location)
+
     if service:
-        garages = garages.filter(services__icontains=service)
+        garages = garages.filter(services__name__icontains=service)
 
     return render(request, 'autocare/service.html', {
-        'garages': garages,  # Only filters if search is performed
-        'all_services': sorted(all_services)  # Services always available
+        'garages': garages,
+        'all_services': all_services,
+        'request': request  # to preserve form state
     })
-
 
 
 # Create your views here.
@@ -64,17 +102,35 @@ def booking(request):
 def contact(request):
     return render(request, "autocare/contact.html")
 
+
 @login_required
 def service(request):
-    # Fetch all unique services from the database
-    all_services = set()
-    for garage in Garage.objects.all():
-        for srv in garage.services.split(','):
-            all_services.add(srv.strip())
+    location_name = request.GET.get('location', '').strip()
+    service_name = request.GET.get('service', '').strip()
+
+    # Fetch all locations and services for the search form
+    all_locations = GarageLocation.objects.all()
+    all_services = GarageService.objects.all()
+
+    # Start with all garages
+    garages = Garage.objects.all()
+
+    # Apply filters only if any search input is provided
+    if location_name:
+        garages = garages.filter(location__address__icontains=location_name)
+
+    if service_name:
+        garages = garages.filter(services__name__icontains=service_name)
 
     return render(request, "autocare/service.html", {
-        'all_services': sorted(all_services)  # Ensure services are listed alphabetically
+        'garages': garages,
+        'all_services': all_services,
+        'all_locations': all_locations,
     })
+
+
+
+
 def team(request):
     return render(request, "autocare/team.html")
 
@@ -147,6 +203,5 @@ def register(request):
     else:
         return render(request, "autocare/register.html")
     
-
 def chat_view(request):
     return render(request, 'autocare/chat.html')

@@ -1,7 +1,5 @@
 from django.urls import path
-from .views import register_garage, search_garages
-from django.conf import settings
-from .consumers import ChatConsumer
+
 
 
 from . import views

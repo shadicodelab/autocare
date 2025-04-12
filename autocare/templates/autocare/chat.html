@@ -1,27 +1,52 @@
 {% extends 'autocare/base.html' %}
 {% block content %}
-<div class="container mt-5">
+<div class="chat-container">
     <h2>Live Chat</h2>
-    <div id="chat-box" style="border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px;"></div>
-    <input type="text" id="message-input" placeholder="Type a message..." class="form-control mt-2">
-    <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
+    <div id="chat-box" class="chat-box"></div>
+    <div class="chat-input-area">
+        <input type="text" id="message-input" placeholder="Type a message..." class="chat-input">
+        <button onclick="sendMessage()" class="chat-send-btn">Send</button>
+    </div>
 </div>
 
 <script>
     // Open WebSocket connection to the chat room
     let chatSocket = new WebSocket("ws://" + window.location.host + "/ws/chat/");
+    let currentUser = "{{ request.user.username }}";  // Get the current logged-in user
 
     chatSocket.onmessage = function(event) {
         let data = JSON.parse(event.data);
         let chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML += "<p><strong>User:</strong> " + data.message + "</p>";
-        chatBox.scrollTop = chatBox.scrollHeight;  // Auto-scroll to the bottom
+
+        let messageDiv = document.createElement("div");
+        messageDiv.classList.add("chat-message");
+
+        // If the message is sent by the current user, align it to the right
+        if (data.username === currentUser) {
+            messageDiv.classList.add("sent");
+            messageDiv.innerHTML = `<strong>You</strong><br>${data.message}`;
+        } else {
+            // If it's received, align it to the left
+            messageDiv.classList.add("received");
+            messageDiv.innerHTML = `<strong>${data.username}</strong><br>${data.message}`;
+        }
+
+        // Append the message to the chat box and auto-scroll
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
     };
 
     function sendMessage() {
-        let messageInput = document.getElementById("message-input").value;
-        chatSocket.send(JSON.stringify({ 'message': messageInput }));
-        document.getElementById("message-input").value = "";  // Clear input after sending
+        let inputField = document.getElementById("message-input");
+        let message = inputField.value;
+        if (message.trim() !== "") {
+            // Send the message through the WebSocket
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            inputField.value = "";  // Clear the input field
+        }
     }
 </script>
+
 {% endblock %}

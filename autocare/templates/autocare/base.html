@@ -33,6 +33,9 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+
 </head>
 
 <body>
@@ -218,7 +221,9 @@
 
     <!-- Template JavaScript -->
     <script src="{% static 'js/main.js' %}"></script>
-    {% block extra_js %}{% endblock %}
+    {% block extra_js %}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    {% endblock %}
 </body>
 
 </html>
