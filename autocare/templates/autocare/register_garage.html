@@ -36,14 +36,14 @@
 
                 <!-- Map Modal -->
                 <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered">
-                        <div class="modal-content">
+                    <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Changed from modal-lg to modal-xl -->
+                        <div class="modal-content" style="width: 100%;">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="mapModalLabel">Select Garage Location</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
-                                <div id="leafletMap" style="height: 400px;"></div>
+                            <div class="modal-body" style="padding: 0;">
+                                <div id="leafletMap" style="height: 700px; width: 100%;"></div> <!-- Increased height -->
                             </div>
                         </div>
                     </div>
@@ -100,68 +100,40 @@
 
 <!-- Bootstrap Modal Map Script -->
 <script>
-
-
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize map with zoom animation settings
-        var map = L.map('leafletMap', {
-            zoomControl: true,
-            zoomAnimation: true,
-            zoomSnap: 0.25,
-            minZoom: 5,
-            maxZoom: 18
-        }).setView([0, 0], 2);
-
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // Custom red pin icon
-        var redPinIcon = L.icon({
-            iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-            iconSize: [40, 60],
-            iconAnchor: [20, 60],
-            popupAnchor: [0, -55]
-        });
+        var mapInitialized = false;
+        var marker;
 
         var mapModal = document.getElementById('mapModal');
-
-        // Invalidate map size after modal fully shown to ensure full rendering
         mapModal.addEventListener('shown.bs.modal', function () {
-            map.invalidateSize();
-        });
+            if (!mapInitialized) {
+                var map = L.map('leafletMap').setView([-1.286389, 36.817223], 7); // Center in Kenya
 
-        // Show modal and focus on specific garage coordinates
-        mapModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var lat = parseFloat(button.getAttribute('data-lat'));
-            var lng = parseFloat(button.getAttribute('data-lng'));
-            var name = button.getAttribute('data-name');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
 
-            // Smooth zoom and center using flyTo
-            map.flyTo([lat, lng], 16, {
-                animate: true,
-                duration: 1.5
-            });
+                map.on('click', function (e) {
+                    var lat = e.latlng.lat.toFixed(6);
+                    var lng = e.latlng.lng.toFixed(6);
 
+                    if (marker) {
+                        marker.setLatLng(e.latlng);
+                    } else {
+                        marker = L.marker(e.latlng).addTo(map);
+                    }
 
-            // Add search control to map
-            L.Control.geocoder({
-                defaultMarkGeocode: true
-            }).addTo(map);
+                    document.getElementById('id_latitude').value = lat;
+                    document.getElementById('id_longitude').value = lng;
 
-            // Remove existing marker
-            if (window.garageMarker) {
-                map.removeLayer(window.garageMarker);
+                    bootstrap.Modal.getInstance(mapModal).hide();
+                });
+
+                mapInitialized = true;
             }
-
-            // Add new marker
-            window.garageMarker = L.marker([lat, lng], { icon: redPinIcon }).addTo(map);
-            window.garageMarker.bindPopup('<strong>' + name + '</strong>').openPopup();
         });
     });
 </script>
+
 
 {% endblock %}

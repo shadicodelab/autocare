@@ -86,24 +86,25 @@
 
 <!-- Map Modal -->
 <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Changed to modal-xl -->
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mapModalLabel">Garage Location</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="leafletMap" style="height: 400px;"></div>
+            <div class="modal-body p-0"> <!-- Removed padding for full-width map -->
+                <div id="leafletMap" style="height: 600px; width: 100%;"></div> <!-- Increased height & full width -->
             </div>
         </div>
     </div>
 </div>
 
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize map with smoother zoom settings
+        // Initialize the Leaflet map
         var map = L.map('leafletMap', {
             zoomControl: true,
             minZoom: 5,
@@ -111,15 +112,15 @@
             zoomAnimation: true,
             zoomSnap: 0.25,
             wheelPxPerZoomLevel: 60
-        }).setView([0, 0], 2);
+        }).setView([0.0236, 37.9062], 6); // Centered roughly on Kenya
 
-        // Load tile layer
+        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(map);
 
-        // Red Google Maps-style marker icon
+        // Define red pin marker icon
         const redPinIcon = L.icon({
             iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
             iconSize: [40, 60],
@@ -129,35 +130,45 @@
 
         var mapModal = document.getElementById('mapModal');
 
-        // Invalidate map size when modal is fully shown
+        // Make sure map resizes correctly after modal shows
         mapModal.addEventListener('shown.bs.modal', function () {
             map.invalidateSize();
         });
 
-        // When modal is triggered, center on garage location
+        // Track existing marker
+        let garageMarker = null;
+
+        // Handle modal show event and set marker
         mapModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var lat = parseFloat(button.getAttribute('data-lat'));
-            var lng = parseFloat(button.getAttribute('data-lng'));
-            var name = button.getAttribute('data-name');
+            const button = event.relatedTarget;
+            const lat = parseFloat(button.getAttribute('data-lat'));
+            const lng = parseFloat(button.getAttribute('data-lng'));
+            const name = button.getAttribute('data-name');
 
-            // Smooth fly to new location
-            map.flyTo([lat, lng], 16, {
-                animate: true,
-                duration: 1.5
-            });
+            if (!isNaN(lat) && !isNaN(lng)) {
+                // Fly to the coordinates
+                map.flyTo([lat, lng], 16, {
+                    animate: true,
+                    duration: 1.5
+                });
 
-            // Remove existing marker if present
-            if (window.garageMarker) {
-                map.removeLayer(window.garageMarker);
+                // Remove previous marker if exists
+                if (garageMarker) {
+                    map.removeLayer(garageMarker);
+                }
+
+                // Add new red pin marker
+                garageMarker = L.marker([lat, lng], {
+                    icon: redPinIcon,
+                    title: name
+                }).addTo(map);
+
+                garageMarker.bindPopup(`<strong>${name}</strong>`).openPopup();
             }
-
-            // Add new red marker
-            window.garageMarker = L.marker([lat, lng], { icon: redPinIcon }).addTo(map);
-            window.garageMarker.bindPopup('<strong>' + name + '</strong>').openPopup();
         });
     });
 </script>
+
 
 
 
