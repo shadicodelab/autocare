@@ -1,7 +1,7 @@
 {% extends 'autocare/base.html' %}
 {% block content %}
 <div class="col-lg-6 mx-auto">
-    <div class="bg-primary h-100 d-flex flex-column justify-content-center text-center p-5 wow zoomIn" data-wow-delay="0.6s">
+    <div class="bg-primary h-100 d-flex flex-column justify-content-center text-center p-5 wow zoomIn" data-wow-delay="0.5s">
         <h1 class="text-white mb-4">Register Your Garage</h1>
 
         {% if messages %}
@@ -51,14 +51,19 @@
 
                 <!-- Services -->
                 <div class="col-12 text-start">
-                    <label class="text-white fw-bold mb-2">Garage Services:</label><br>
-                    {% for service in services %}
-                        <div class="form-check form-check-inline text-white">
-                            <input class="form-check-input" type="checkbox" name="services" value="{{ service.id }}" id="service_{{ service.id }}">
-                            <label class="form-check-label" for="service_{{ service.id }}">{{ service.name }}</label>
-                        </div>
-                    {% endfor %}
+                    <label class="text-white fw-bold mb-2">Garage Services:</label>
+                    <div class="row">
+                        {% for service in services %}
+                            <div class="col-md-4 col-sm-6 mb-2">
+                                <div class="form-check text-white">
+                                    <input class="form-check-input" type="checkbox" name="services" value="{{ service.id }}" id="service_{{ service.id }}">
+                                    <label class="form-check-label" for="service_{{ service.id }}">{{ service.name }}</label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
+                
 
                 <!-- Owner & Contact -->
                 <div class="col-12">
@@ -89,40 +94,74 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<!-- Leaflet Control Geocoder CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <!-- Bootstrap Modal Map Script -->
 <script>
+
+
     document.addEventListener('DOMContentLoaded', function () {
-        var mapInitialized = false;
-        var marker;
+        // Initialize map with zoom animation settings
+        var map = L.map('leafletMap', {
+            zoomControl: true,
+            zoomAnimation: true,
+            zoomSnap: 0.25,
+            minZoom: 5,
+            maxZoom: 18
+        }).setView([0, 0], 2);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Custom red pin icon
+        var redPinIcon = L.icon({
+            iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            iconSize: [40, 60],
+            iconAnchor: [20, 60],
+            popupAnchor: [0, -55]
+        });
 
         var mapModal = document.getElementById('mapModal');
+
+        // Invalidate map size after modal fully shown to ensure full rendering
         mapModal.addEventListener('shown.bs.modal', function () {
-            if (!mapInitialized) {
-                var map = L.map('leafletMap').setView([-1.286389, 36.817223], 7); // Center in Kenya
+            map.invalidateSize();
+        });
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+        // Show modal and focus on specific garage coordinates
+        mapModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var lat = parseFloat(button.getAttribute('data-lat'));
+            var lng = parseFloat(button.getAttribute('data-lng'));
+            var name = button.getAttribute('data-name');
 
-                map.on('click', function (e) {
-                    var lat = e.latlng.lat.toFixed(6);
-                    var lng = e.latlng.lng.toFixed(6);
+            // Smooth zoom and center using flyTo
+            map.flyTo([lat, lng], 16, {
+                animate: true,
+                duration: 1.5
+            });
 
-                    if (marker) {
-                        marker.setLatLng(e.latlng);
-                    } else {
-                        marker = L.marker(e.latlng).addTo(map);
-                    }
 
-                    document.getElementById('id_latitude').value = lat;
-                    document.getElementById('id_longitude').value = lng;
+            // Add search control to map
+            L.Control.geocoder({
+                defaultMarkGeocode: true
+            }).addTo(map);
 
-                    bootstrap.Modal.getInstance(mapModal).hide();
-                });
-
-                mapInitialized = true;
+            // Remove existing marker
+            if (window.garageMarker) {
+                map.removeLayer(window.garageMarker);
             }
+
+            // Add new marker
+            window.garageMarker = L.marker([lat, lng], { icon: redPinIcon }).addTo(map);
+            window.garageMarker.bindPopup('<strong>' + name + '</strong>').openPopup();
         });
     });
 </script>
+
 {% endblock %}

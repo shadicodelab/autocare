@@ -63,8 +63,17 @@
                             <i class="fa fa-envelope text-primary me-2"></i> {{ garage.email }}
                         </small>
                     </div>
-                    <div class="text-center py-3">
-                        <a href="{% url 'chat' %}?garage_id={{ garage.id }}" class="btn btn-primary">Connect</a>
+                    <div class="d-flex justify-content-between py-3">
+                        <!-- Connect Button (Left) -->
+                        <a href="{% url 'chat' %}?garage_id={{ garage.id }}" class="btn btn-primary flex-fill me-2">Connect</a>
+                        
+                        <!-- Locate Garage Button (Right) -->
+                        <button class="btn btn-primary flex-fill ms-2" data-bs-toggle="modal" data-bs-target="#mapModal"
+                                data-lat="{{ garage.location.latitude }}"
+                                data-lng="{{ garage.location.longitude }}"
+                                data-name="{{ garage.name }}">
+                            Locate
+                        </button>
                     </div>
                 </div>
             </div>
@@ -74,4 +83,82 @@
         </div>
     </div>
 </div>
+
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mapModalLabel">Garage Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="leafletMap" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize map with smoother zoom settings
+        var map = L.map('leafletMap', {
+            zoomControl: true,
+            minZoom: 5,
+            maxZoom: 18,
+            zoomAnimation: true,
+            zoomSnap: 0.25,
+            wheelPxPerZoomLevel: 60
+        }).setView([0, 0], 2);
+
+        // Load tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Red Google Maps-style marker icon
+        const redPinIcon = L.icon({
+            iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            iconSize: [40, 60],
+            iconAnchor: [20, 60],
+            popupAnchor: [0, -55]
+        });
+
+        var mapModal = document.getElementById('mapModal');
+
+        // Invalidate map size when modal is fully shown
+        mapModal.addEventListener('shown.bs.modal', function () {
+            map.invalidateSize();
+        });
+
+        // When modal is triggered, center on garage location
+        mapModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var lat = parseFloat(button.getAttribute('data-lat'));
+            var lng = parseFloat(button.getAttribute('data-lng'));
+            var name = button.getAttribute('data-name');
+
+            // Smooth fly to new location
+            map.flyTo([lat, lng], 16, {
+                animate: true,
+                duration: 1.5
+            });
+
+            // Remove existing marker if present
+            if (window.garageMarker) {
+                map.removeLayer(window.garageMarker);
+            }
+
+            // Add new red marker
+            window.garageMarker = L.marker([lat, lng], { icon: redPinIcon }).addTo(map);
+            window.garageMarker.bindPopup('<strong>' + name + '</strong>').openPopup();
+        });
+    });
+</script>
+
+
+
 {% endblock %}

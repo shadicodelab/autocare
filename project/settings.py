@@ -84,11 +84,12 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
-        'OPTIONS': {
-            'timeout': 20,  # Increase the timeout from default 5s
-        }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'autocare',  # Database name
+        'USER': 'root',  # Your MySQL username (default is 'root')
+        'PASSWORD': 'busia2020',  # Your MySQL password
+        'HOST': 'localhost',  # Use 'localhost' if running MySQL locally
+        'PORT': '3306',  # Default MySQL port
     }
 }
 

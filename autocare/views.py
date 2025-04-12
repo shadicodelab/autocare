@@ -65,6 +65,12 @@ def register_garage(request):
     })
 
 
+
+def services_page_view(request):
+    garages = Garage.objects.select_related('location').all()
+    return render(request, 'autocare/services.html', {'garages': garages})
+
+
 @login_required
 def search_garages(request):
     location = request.GET.get('location', '').strip()
