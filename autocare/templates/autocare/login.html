@@ -1,33 +1,235 @@
 {% extends "autocare/base.html" %}
 
 {% block content %}
+<style>
+  /* Hide only navbar and footer selectors - update these selectors to match your specific navbar and footer classes/IDs */
+  .navbar,
+  .navbar-container,
+  header,
+  .site-header,
+  .topbar,
+  .top-bar,
+  nav,
+  .navigation,
+  .main-header,
+  .header-wrapper,
+  footer,
+  .footer,
+  .site-footer,
+  .main-footer,
+  .footer-wrapper,
+  .bottom-footer,
+  .copyright-area {
+    display: none !important;
+  }
+  
+  body {
+    background: linear-gradient(45deg, #d30000, #ff5252);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .glassmorphism-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(45deg, #d30000, #ff5252);
+    padding: 30px 15px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .glassmorphism-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 10%, transparent 60%);
+    animation: rotate 15s linear infinite;
+  }
+  
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(139, 0, 0, 0.37);
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 450px;
+    transform: perspective(1000px) rotateX(5deg);
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+  
+  .glass-card:hover {
+    transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(139, 0, 0, 0.5);
+  }
+  
+  .glass-input {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    padding: 15px 20px;
+    color: #fff;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .glass-btn {
+    background: rgba(175, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(175, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    color: #fff;
+  }
+  
+  .glass-btn:hover {
+    background: rgba(200, 0, 0, 0.9);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(200, 0, 0, 0.5);
+  }
+  
+  .card-title {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+  }
+  
+  .card-link {
+    color: #ffcccc;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  .card-link:hover {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+  
+  .floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.2;
+    filter: blur(80px);
+    z-index: 1;
+  }
+  
+  .shape-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -50px;
+    background: linear-gradient(45deg, #ff0000, #cc0000);
+  }
+  
+  .shape-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    left: -50px;
+    background: linear-gradient(45deg, #990000, #ff3333);
+  }
+  
+  .alert-glass {
+    background: rgba(139, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(139, 0, 0, 0.5);
+    color: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+</style>
 
-    <div class="col-lg-6">
-        <div class="bg-primary h-100 d-flex flex-column justify-content-center text-center p-5 wow zoomIn" data-wow-delay="0.6s">
-            <h1 class="text-white mb-4">Login</h1>
+<script>
+  // Execute when DOM is fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Hide only navigation and footer elements
+    const navbarSelectors = [
+      'header', '.header', '.navbar', '.navbar-container', '.site-header', 
+      '.topbar', '.top-bar', 'nav', '.navigation', '.main-header', '.header-wrapper'
+    ];
+    
+    const footerSelectors = [
+      'footer', '.footer', '.site-footer', '.main-footer', '.footer-wrapper', 
+      '.bottom-footer', '.copyright-area'
+    ];
+    
+    // Function to hide elements that match any selector
+    function hideElements(selectors) {
+      selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+          element.style.display = 'none';
+        });
+      });
+    }
+    
+    // Hide navbar and footer elements
+    hideElements(navbarSelectors);
+    hideElements(footerSelectors);
+    
+    // Set body background
+    document.body.style.background = 'linear-gradient(45deg, #d30000, #ff5252)';
+  });
+</script>
 
-            {% if message %}
-                <div class="alert alert-danger">{{ message }}</div>
-            {% endif %}
-
-            <form action="{% url 'login' %}" method="post">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-12">
-                        <input class="form-control border-0" type="text" name="username" placeholder="Username" style="height: 55px;" required>
-                    </div>
-                    <div class="col-12">
-                        <input class="form-control border-0" type="password" name="password" placeholder="Password" style="height: 55px;" required>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-secondary w-100 py-3" type="submit">Login</button>
-                    </div>
-                </div>
-            </form>
-
-            <p class="mt-3">Don't have an account? <a href="{% url 'register' %}" style="color: #f39c12;">Register here.</a></p>
-
+<div class="glassmorphism-container">
+  <div class="floating-shape shape-1"></div>
+  <div class="floating-shape shape-2"></div>
+  
+  <div class="glass-card wow zoomIn" data-wow-delay="0.6s">
+    <h1 class="card-title">Login</h1>
+    
+    {% if message %}
+      <div class="alert-glass">{{ message }}</div>
+    {% endif %}
+    
+    <form action="{% url 'login' %}" method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-12 mb-3">
+          <input class="form-control glass-input" type="text" name="username" placeholder="Username" required>
         </div>
-    </div>
-
+        <div class="col-12 mb-3">
+          <input class="form-control glass-input" type="password" name="password" placeholder="Password" required>
+        </div>
+        <div class="col-12">
+          <button class="btn glass-btn w-100 py-3" type="submit">Login</button>
+        </div>
+      </div>
+    </form>
+    
+    <p class="mt-4 text-white">Don't have an account? <a href="{% url 'register' %}" class="card-link">Register here.</a></p>
+  </div>
+</div>
 {% endblock %}

@@ -4,172 +4,495 @@
 {% block title %}Services{% endblock %}
 
 {% block content %}
-<div class="page-layout">
-
-    <!-- Search Form -->
-    <form method="GET" action="{% url 'service' %}" class="garage-search-form">
-        <label for="service">Select a Service:</label>
-        <select name="service" id="service">
-            <option value="">-- Select Service --</option>
-            {% for service in all_services %}
-                <option value="{{ service.name }}" {% if request.GET.service == service.name %}selected{% endif %}>{{ service.name }}</option>
-            {% endfor %}
-        </select>
-    
-        <label for="location">Enter Location:</label>
-        <input type="text" name="location" id="location" placeholder="Enter Location" value="{{ request.GET.location }}">
-    
-        <button type="submit">Search</button>
-    </form>
-
-    <!-- Garage Cards -->
-    <div class="garage-list container">
-        <h2 class="text-center mb-5">Available Garages</h2>
+<!-- Hero Banner -->
+<div class="container-fluid py-5 bg-dark text-white mb-5" style="background-image: url('{% static 'img/carousel-bg-1.jpg' %}'); background-size: cover; background-position: center; position: relative;">
+    <div style="background-color: rgba(0, 0, 0, 0.7); position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <div class="container position-relative">
         <div class="row">
-            {% for garage in garages %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="property-item">
-                    <div class="position-relative">
-                        {% if garage.image %}
-                        <img class="img-fluid" src="{{ garage.image.url }}" alt="{{ garage.name }}">
-                        {% else %}
-                        <img class="img-fluid" src="{% static 'images/no-image.png' %}" alt="No Image Available">
-                        {% endif %}
-                        <div class="bg-primary text-white position-absolute top-0 start-0 m-3 px-3 py-1 rounded">
-                            {% if garage.services.all %}
-                                {{ garage.services.all.0.name }}
-                            {% endif %}
-                        </div>
-                        <div class="bg-white text-primary position-absolute bottom-0 start-0 m-3 px-3 pt-1 rounded-top">
-                            {{ garage.name }}
-                        </div>
+            <div class="col-md-8">
+                <h1 class="display-4 fw-bold mb-4 text-white">Find the Right Auto Service</h1>
+                <p class="lead mb-4">Connect with trusted mechanics and repair shops near you</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-layout">
+    <div class="container">
+        <!-- Advanced Search Form -->
+        <div class="glass-form-card shadow-lg mb-5">
+            <div class="card-body p-4">
+                <h4 class="mb-3"><i class="fa fa-search text-primary me-2"></i>Find Auto Services</h4>
+                <form method="GET" action="{% url 'service' %}" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="service" class="form-label fw-bold"><i class="fa fa-tools text-primary me-2"></i>Service Type</label>
+                        <select name="service" id="service" class="glass-input form-select form-select-lg rounded-pill">
+                            <option value="">All Services</option>
+                            {% for service in all_services %}
+                                <option value="{{ service.name }}" {% if request.GET.service == service.name %}selected{% endif %}>{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="p-4 pb-0">
-                        <h5 class="text-primary mb-3">{{ garage.owner_name }}</h5>
-                        <a class="d-block h5 mb-2" href="">{{ garage.name }}</a>
-                        <p><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ garage.location.address }}</p>
+                    
+                    <div class="col-md-5">
+                        <label for="location" class="form-label fw-bold"><i class="fa fa-map-marker-alt text-primary me-2"></i>Your Location</label>
+                        <input type="text" name="location" id="location" placeholder="Enter your location" value="{{ request.GET.location }}" class="glass-input form-control form-control-lg rounded-pill">
                     </div>
-                    <div class="d-flex border-top">
-                        <small class="flex-fill text-center border-end py-2">
-                            <i class="fa fa-cog text-primary me-2"></i>
-                            {% if garage.services.all %}
-                                {{ garage.services.all.0.name }}
-                            {% endif %}
-                        </small>
-                        <small class="flex-fill text-center border-end py-2">
-                            <i class="fa fa-phone text-primary me-2"></i> {{ garage.contact }}
-                        </small>
-                        <small class="flex-fill text-center py-2">
-                            <i class="fa fa-envelope text-primary me-2"></i> {{ garage.email }}
-                        </small>
-                    </div>
-                    <div class="d-flex justify-content-between py-3">
-                        <!-- Connect Button (Left) -->
-                        <a href="{% url 'chat' %}?garage_id={{ garage.id }}" class="btn btn-primary flex-fill me-2">Connect</a>
-                        
-                        <!-- Locate Garage Button (Right) -->
-                        <button class="btn btn-primary flex-fill ms-2" data-bs-toggle="modal" data-bs-target="#mapModal"
-                                data-lat="{{ garage.location.latitude }}"
-                                data-lng="{{ garage.location.longitude }}"
-                                data-name="{{ garage.name }}">
-                            Locate
+                    
+                    <div class="col-md-2">
+                        <button type="submit" class="glass-btn btn btn-primary btn-lg w-100 rounded-pill">
+                            <i class="fa fa-search me-2"></i>Search
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
-            {% empty %}
-            <p class="text-center">No garages found matching your criteria.</p>
-            {% endfor %}
+        </div>
+
+        <!-- Garage Listings -->
+        <div class="garage-list mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0"><i class="fa fa-wrench text-primary me-2"></i>Available Garages</h2>
+                <div class="badge bg-primary rounded-pill px-3 py-2">{{ garages|length }} Found</div>
+            </div>
+
+            <div class="row">
+                {% for garage in garages %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="glass-garage-card">
+                        <!-- Garage Image -->
+                        <div class="garage-image-container">
+                            {% if garage.image %}
+                            <img class="garage-image" src="{{ garage.image.url }}" alt="{{ garage.name }}">
+                            {% else %}
+                            <img class="garage-image" src="{% static 'images/no-image.png' %}" alt="No Image Available">
+                            {% endif %}
+                            
+                            <!-- Service Badge -->
+                            <div class="service-badge">
+                                <span class="badge bg-primary px-3 py-2 rounded-pill">
+                                    {% if garage.services.all %}
+                                        <i class="fa fa-cog me-1"></i>{{ garage.services.all.0.name }}
+                                    {% else %}
+                                        <i class="fa fa-cog me-1"></i>Auto Service
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Garage Info -->
+                        <div class="garage-info p-4">
+                            <h4 class="garage-title mb-1">{{ garage.name }}</h4>
+                            <p class="garage-owner mb-3"><i class="fa fa-user text-primary me-2"></i>{{ garage.owner_name }}</p>
+                            
+                            <div class="garage-details mb-3">
+                                <p class="mb-2"><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ garage.location.address }}</p>
+                                <p class="mb-2"><i class="fa fa-phone text-primary me-2"></i>{{ garage.contact }}</p>
+                                <p class="mb-0"><i class="fa fa-envelope text-primary me-2"></i>{{ garage.email }}</p>
+                            </div>
+                            
+                            <!-- Service Tags -->
+                            <div class="garage-services mb-3">
+                                {% for service in garage.services.all|slice:":3" %}
+                                <span class="service-tag">{{ service.name }}</span>
+                                {% endfor %}
+                                {% if garage.services.all|length > 3 %}
+                                <span class="service-tag">+{{ garage.services.all|length|add:"-3" }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="garage-actions p-4 pt-0">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'chat' %}?garage_id={{ garage.id }}" class="glass-btn btn btn-primary flex-fill">
+                                    <i class="fa fa-comment me-2"></i>Connect
+                                </a>
+                                <button class="glass-btn-outline btn btn-outline-primary flex-fill" data-bs-toggle="modal" data-bs-target="#mapModal"
+                                        data-lat="{{ garage.location.latitude }}"
+                                        data-lng="{{ garage.location.longitude }}"
+                                        data-address="{{ garage.location.address }}"
+                                        data-name="{{ garage.name }}">
+                                    <i class="fa fa-map-marker-alt me-2"></i>Locate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning text-center p-5">
+                        <i class="fa fa-exclamation-circle fa-3x mb-3"></i>
+                        <h4>No garages found</h4>
+                        <p class="mb-0">Try adjusting your search criteria or expanding your location radius.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Map Modal -->
 <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Changed to modal-xl -->
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="mapModalLabel">Garage Location</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0"> <!-- Removed padding for full-width map -->
-                <div id="leafletMap" style="height: 600px; width: 100%;"></div> <!-- Increased height & full width -->
-            </div>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content glass-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mapModalLabel">Garage Location</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <div class="modal-body">
+          <div id="farmMap" style="height: 400px; width: 100%; border-radius: 10px;"></div>
+          <div class="mt-3">
+            <p id="farmAddress" class="mb-1"><strong>Address:</strong> <span></span></p>
+            <p id="farmCoordinates" class="mb-0"><strong>Coordinates:</strong> <span></span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="glass-btn-outline btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a id="directionsLink" href="#" target="_blank" class="glass-btn btn btn-success">Get Directions</a>
+        </div>
+      </div>
     </div>
 </div>
 
+<!-- Add in the head section of your base.html -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+<!-- Modal remains the same as above -->
+
+<!-- Replace the Google Maps script with this -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize the Leaflet map
-        var map = L.map('leafletMap', {
-            zoomControl: true,
-            minZoom: 5,
-            maxZoom: 18,
-            zoomAnimation: true,
-            zoomSnap: 0.25,
-            wheelPxPerZoomLevel: 60
-        }).setView([0.0236, 37.9062], 6); // Centered roughly on Kenya
+  let map;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const mapModal = document.getElementById('mapModal');
+    if (mapModal) {
+      mapModal.addEventListener('shown.bs.modal', function(event) {
+        // Get the button that triggered the modal
+        const button = event.relatedTarget;
+        
+        // Extract data attributes
+        const lat = parseFloat(button.getAttribute('data-lat'));
+        const lng = parseFloat(button.getAttribute('data-lng'));
+        const name = button.getAttribute('data-name');
+        const address = button.getAttribute('data-address');
+        
+        // Update info in modal
+        document.getElementById('farmAddress').querySelector('span').textContent = address || 'Not Available';
+        document.getElementById('farmCoordinates').querySelector('span').textContent = 
+          !isNaN(lat) && !isNaN(lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Not Available';
+        
+        // Update directions link
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          document.getElementById('directionsLink').href = directionsUrl;
+        } else {
+          document.getElementById('directionsLink').style.display = 'none';
+        }
+        
+        // Initialize map on modal open
+        if (map) {
+          map.remove(); // Remove previous map instance if it exists
+        }
+        
+        // Check if we have valid coordinates
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Initialize the map
+          map = L.map('farmMap').setView([lat, lng], 15);
+          
+          // Add the OpenStreetMap tiles
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(map);
+          
+          // Add a marker at the farm location
+          const marker = L.marker([lat, lng]).addTo(map);
+          
+          // Add a popup with farm info
+          marker.bindPopup(`<strong>${name || 'Garage'}</strong><br>${address || ''}`).openPopup();
+        } else {
+          // If coordinates are invalid, show an error message
+          document.getElementById('farmMap').innerHTML = '<div class="alert alert-warning">No valid location data available for this garage.</div>';
+          document.getElementById('directionsLink').style.display = 'none';
+        }
+      });
+    }
+    
+    // Add hover effect to glass-garage-card
+    document.querySelectorAll('.glass-garage-card').forEach(card => {
+      card.addEventListener('mousemove', function(e) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = (y - centerY) / 20;
+        const rotateY = (centerX - x) / 20;
+        
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+      });
+    });
+  });
+</script>
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
+<style>
+    /* Root variables for consistent styling */
+    :root {
+        --primary-color: #d63031;
+        --primary-rgb: 214, 48, 49;
+        --primary-dark: #c0392b;
+        --white-transparent: rgba(255, 255, 255, 0.15);
+        --white-more-transparent: rgba(255, 255, 255, 0.07);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+        --glass-shadow: 0 8px 32px 0 rgba(139, 0, 0, 0.37);
+        --glass-shadow-hover: 0 12px 40px 0 rgba(139, 0, 0, 0.5);
+    }
+    
+    /* Page Layout */
+    .page-layout {
+        padding: 30px 0;
+    }
+    
+    /* Glassmorphism Form Card */
+    .glass-form-card {
+        background: var(--white-transparent);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-form-card:hover {
+        box-shadow: var(--glass-shadow-hover);
+    }
+    
+    /* Glassmorphism Input Fields */
+    .glass-input {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 12px;
+        color: #333;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .glass-input::placeholder {
+        color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+    
+    /* 3D Garage Card */
+    .glass-garage-card {
+        background: var(--white-transparent);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        margin-bottom: 30px;
+        overflow: hidden;
+        transform: perspective(1000px) rotateX(5deg);
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        position: relative;
+    }
+    
+    .glass-garage-card:hover {
+        transform: perspective(1000px) rotateX(0deg) translateY(-10px);
+        box-shadow: var(--glass-shadow-hover);
+    }
+    
+    /* Garage Image */
+    .garage-image-container {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .garage-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .glass-garage-card:hover .garage-image {
+        transform: scale(1.05);
+    }
+    
+    /* Service Badge */
+    .service-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 2;
+    }
+    
+    /* Garage Info */
+    .garage-title {
+        color: #333;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .garage-owner {
+        color: #555;
+        font-weight: 500;
+    }
+    
+    .garage-details p {
+        color: #444;
+        margin-bottom: 8px;
+    }
+    
+    /* Service Tags */
+    .service-tag {
+        display: inline-block;
+        background: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        border-radius: 50px;
+        padding: 5px 12px;
+        margin-right: 6px;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .service-tag:hover {
+        background: rgba(var(--primary-rgb), 0.2);
+    }
+    
+    /* Action Buttons */
+    .glass-btn {
+        background: rgba(var(--primary-rgb), 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 12px;
+        backdrop-filter: blur(5px);
+        font-weight: 600;
+        letter-spacing: 1px;
+        box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+        transition: all 0.3s ease;
+        color: #fff;
+    }
+    
+    .glass-btn:hover {
+        background: rgba(var(--primary-rgb), 0.9);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.5);
+    }
+    
+    .glass-btn-outline {
+        background: transparent;
+        border: 1px solid rgba(var(--primary-rgb), 0.6);
+        border-radius: 12px;
+        backdrop-filter: blur(5px);
+        font-weight: 600;
+        letter-spacing: 1px;
+        box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.1);
+        transition: all 0.3s ease;
+        color: var(--primary-color);
+    }
+    
+    .glass-btn-outline:hover {
+        background: rgba(var(--primary-rgb), 0.9);
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.3);
+    }
+    
+    /* Map Modal */
+    .glass-modal {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+    
+    /* Bootstrap Overrides */
+    .btn {
+        font-weight: 500;
+        padding: 0.5rem 1.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .rounded-pill {
+        border-radius: 50rem !important;
+    }
+    
+    /* These colors match your registration page */
+    .btn-primary, .bg-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .text-primary {
+        color: var(--primary-color) !important;
+    }
+    
+    /* Animation for floating elements */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+        .glass-garage-card {
+            transform: perspective(800px) rotateX(3deg);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .glass-garage-card {
+            transform: none;
+        }
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const locationInput = document.getElementById("location");
+        const serviceSelect = document.getElementById("service");
 
-        // Define red pin marker icon
-        const redPinIcon = L.icon({
-            iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-            iconSize: [40, 60],
-            iconAnchor: [20, 60],
-            popupAnchor: [0, -55]
-        });
+        locationInput.addEventListener("input", function () {
+            if (this.value.trim() === "") {
+                // Clear service dropdown
+                serviceSelect.value = "";
 
-        var mapModal = document.getElementById('mapModal');
-
-        // Make sure map resizes correctly after modal shows
-        mapModal.addEventListener('shown.bs.modal', function () {
-            map.invalidateSize();
-        });
-
-        // Track existing marker
-        let garageMarker = null;
-
-        // Handle modal show event and set marker
-        mapModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const lat = parseFloat(button.getAttribute('data-lat'));
-            const lng = parseFloat(button.getAttribute('data-lng'));
-            const name = button.getAttribute('data-name');
-
-            if (!isNaN(lat) && !isNaN(lng)) {
-                // Fly to the coordinates
-                map.flyTo([lat, lng], 16, {
-                    animate: true,
-                    duration: 1.5
-                });
-
-                // Remove previous marker if exists
-                if (garageMarker) {
-                    map.removeLayer(garageMarker);
-                }
-
-                // Add new red pin marker
-                garageMarker = L.marker([lat, lng], {
-                    icon: redPinIcon,
-                    title: name
-                }).addTo(map);
-
-                garageMarker.bindPopup(`<strong>${name}</strong>`).openPopup();
+                // Build a new URL without any search parameters
+                const baseUrl = window.location.origin + window.location.pathname;
+                window.location.href = baseUrl;
             }
         });
     });
 </script>
-
-
 
 
 {% endblock %}

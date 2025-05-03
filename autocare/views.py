@@ -79,11 +79,11 @@ def search_garages(request):
     all_services = GarageService.objects.all()
     garages = Garage.objects.all()
 
-    if location:
-        garages = garages.filter(location__address__icontains=location)
-
     if service:
         garages = garages.filter(services__name__icontains=service)
+
+    if location:
+        garages = garages.filter(location__address__icontains=location)
 
     return render(request, 'autocare/service.html', {
         'garages': garages,
